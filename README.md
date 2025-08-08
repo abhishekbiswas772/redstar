@@ -300,7 +300,6 @@ redstar/
 │   └── run_comprehensive_tests.py # Master test runner
 ├── main.py                       # Entry point
 ├── redstar_main.py              # Alternative entry point
-├── CLAUDE.md                     # Development documentation
 ├── CONTRIBUTING.md              # Contribution guidelines
 └── README.md                     # This file
 ```
