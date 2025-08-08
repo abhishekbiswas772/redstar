@@ -3,6 +3,7 @@ import threading
 import signal
 from core_datastructures.dynamic_array import DArray
 from redstar_core.redstar_datastore import RedStarDataSource
+from redstar_core.pubsub_manager import RedstarPubSubManager
 from redstar_commands.command_processor import RedstarCommandProcessor
 from redstar_server.client_handler import RedstarClientHandler
 
@@ -20,7 +21,8 @@ class RedstarServer:
         
         # Core components
         self.data_store = RedStarDataSource()
-        self.command_processor = RedstarCommandProcessor(self.data_store)
+        self.pubsub_manager = RedstarPubSubManager()
+        self.command_processor = RedstarCommandProcessor(self.data_store, self.pubsub_manager)
         
         # Server state
         self.running = False
@@ -47,13 +49,16 @@ class RedstarServer:
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(self.max_connections)
             
+            # Set socket timeout to allow signal handling
+            self.server_socket.settimeout(1.0)
+            
             self.running = True
             
-            print(f"🚀 Redstar Server (from scratch) started!")
-            print(f"📡 Listening on {self.host}:{self.port}")
-            print(f"🔌 Max connections: {self.max_connections}")
-            print(f"⚡ All data structures implemented from scratch!")
-            print(f"🛑 Press Ctrl+C to shutdown")
+            print(f"Redstar Server (from scratch) started!")
+            print(f"Listening on {self.host}:{self.port}")
+            print(f"Max connections: {self.max_connections}")
+            print(f"All data structures implemented from scratch!")
+            print(f"Press Ctrl+C to shutdown")
             print("-" * 50)
             
             # Main server loop
@@ -66,7 +71,8 @@ class RedstarServer:
                     client_handler = RedstarClientHandler(
                         client_socket, 
                         client_address, 
-                        self.command_processor
+                        self.command_processor,
+                        self.pubsub_manager
                     )
                     
                     # Start client handler in new thread
@@ -82,6 +88,9 @@ class RedstarServer:
                     # Clean up finished threads
                     self._cleanup_threads()
                     
+                except socket.timeout:
+                    # Timeout allows signal handling - continue loop
+                    continue
                 except socket.error as e:
                     if self.running:
                         print(f"Socket error: {e}")
@@ -110,7 +119,7 @@ class RedstarServer:
         if not self.running:
             return
         
-        print("\n🛑 Shutting down Redstar server...")
+        print("\nShutting down Redstar server...")
         self.running = False
         
         # Close server socket
@@ -122,4 +131,4 @@ class RedstarServer:
             handler, thread = self.client_threads[i]
             handler.close()
         
-        print("✅ Redstar server shutdown complete!")
+        print("Redstar server shutdown complete!")

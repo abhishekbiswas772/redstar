@@ -32,6 +32,13 @@ class HashSet:
     def __iter__(self):
         return iter(self._table)
     
+    def remove(self, item):
+        """Remove item from the set. Returns True if item was present, False otherwise."""
+        if not self._table.contains(item):
+            return False
+        self._table.remove(item)
+        return True
+    
     def __repr__(self):
         return f"HashSet({{{', '.join(repr(item) for item in self)}}})" 
     

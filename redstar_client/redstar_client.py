@@ -21,9 +21,9 @@ class RedstarClient:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
             self.connected = True
-            print(f"✅ Connected to Redstar server at {self.host}:{self.port}")
+            print(f"Connected to Redstar server at {self.host}:{self.port}")
         except Exception as e:
-            print(f"❌ Failed to connect: {e}")
+            print(f"Failed to connect: {e}")
             return False
         return True
     

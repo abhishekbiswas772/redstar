@@ -42,10 +42,12 @@ Contains the core Redstar-specific implementation:
 - **`redstar_protocol.py`**: Complete RESP (Redis Serialization Protocol) parser with encode/decode functionality
 - **`redstar_value.py`**: Value wrapper that handles expiration times and type information
 - **`redstar_datastore.py`**: Thread-safe data storage with automatic key expiration
+- **`pubsub_manager.py`**: Pub/Sub messaging system with channel and pattern subscriptions
 
 ### `redstar_commands/`
 Contains the command processing logic:
 - **`command_processor.py`**: Command processor with full Redis-compatible command implementations
+- **`pubsub_commands.py`**: Pub/Sub command implementations (SUBSCRIBE, PUBLISH, etc.)
 
 ### `redstar_server/`
 Contains the server implementation:
@@ -59,6 +61,7 @@ Contains the client implementation:
 ### `redstar_tests/`
 Contains the test suite:
 - **`test_suite.py`**: Comprehensive test suite and tutorial functionality
+- **`pubsub_test_suite.py`**: Dedicated pub/sub testing with multi-client scenarios
 
 ### `main.py` and `redstar_main.py`
 Entry points for starting the server and running tests.
@@ -76,11 +79,24 @@ The codebase uses a custom `DArray` (from `dynamic_array.py`) throughout instead
 **List Operations**: LPUSH, RPUSH, LPOP, RPOP, LLEN, LRANGE  
 **Set Operations**: SADD, SREM, SMEMBERS, SCARD, SISMEMBER
 **Hash Operations**: HSET, HGET, HDEL, HGETALL, HKEYS, HVALS
+**Pub/Sub Operations**: SUBSCRIBE, UNSUBSCRIBE, PSUBSCRIBE, PUNSUBSCRIBE, PUBLISH, PUBSUB
 **Server Operations**: PING, INFO, FLUSHALL
 
 ## Thread Safety
 
 The `RedStarDataSource` class uses threading.RLock() for thread-safe operations. All data access should go through this class to maintain consistency.
+
+The `RedstarPubSubManager` also uses threading.RLock() for thread-safe pub/sub operations, enabling concurrent subscriptions, publications, and message delivery.
+
+## Pub/Sub System
+
+The pub/sub system supports:
+- **Channel subscriptions**: Direct channel-to-subscriber messaging
+- **Pattern subscriptions**: Wildcard pattern matching for channels  
+- **Multiple subscribers**: Many clients can subscribe to the same channel
+- **Message delivery**: Automatic routing of published messages to subscribers
+- **Introspection**: Commands to inspect active channels and subscription counts
+- **Client isolation**: Each client maintains independent subscription state
 
 ## Protocol Implementation
 

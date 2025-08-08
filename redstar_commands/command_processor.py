@@ -1,10 +1,23 @@
 from core_datastructures.hash_table import HashTable
 from core_datastructures.dynamic_array import DArray
+from redstar_commands.pubsub_commands import RedstarPubSubCommands
+from redstar_commands.advanced_commands import RedstarAdvancedCommands
+from redstar_commands.datatype_commands import RedstarDataTypeCommands
 
 
 class RedstarCommandProcessor:
-    def __init__(self, data_store):
+    def __init__(self, data_store, pubsub_manager=None):
         self.store = data_store
+        self.pubsub_manager = pubsub_manager
+        
+        # Initialize pub/sub commands if manager is provided
+        self.pubsub_commands = None
+        if pubsub_manager:
+            self.pubsub_commands = RedstarPubSubCommands(pubsub_manager)
+        
+        # Initialize advanced commands
+        self.advanced_commands = RedstarAdvancedCommands(data_store)
+        self.datatype_commands = RedstarDataTypeCommands(data_store)
         
         # Command registry - maps command names to methods
         self.commands = HashTable()
@@ -50,8 +63,76 @@ class RedstarCommandProcessor:
         self.commands['PING'] = self.cmd_ping
         self.commands['INFO'] = self.cmd_info
         self.commands['FLUSHALL'] = self.cmd_flushall
+        
+        # Pub/Sub commands (if pub/sub manager is available)
+        if self.pubsub_commands:
+            self.commands['SUBSCRIBE'] = self.cmd_subscribe
+            self.commands['UNSUBSCRIBE'] = self.cmd_unsubscribe
+            self.commands['PSUBSCRIBE'] = self.cmd_psubscribe
+            self.commands['PUNSUBSCRIBE'] = self.cmd_punsubscribe
+            self.commands['PUBLISH'] = self.cmd_publish
+            self.commands['PUBSUB'] = self.cmd_pubsub
+        
+        # Advanced String commands
+        self.commands['APPEND'] = self.cmd_append
+        self.commands['STRLEN'] = self.cmd_strlen
+        self.commands['GETRANGE'] = self.cmd_getrange
+        self.commands['SETRANGE'] = self.cmd_setrange
+        self.commands['MGET'] = self.cmd_mget
+        self.commands['MSET'] = self.cmd_mset
+        self.commands['GETSET'] = self.cmd_getset
+        
+        # Advanced List commands
+        self.commands['LINDEX'] = self.cmd_lindex
+        self.commands['LSET'] = self.cmd_lset
+        
+        # Advanced Set commands
+        self.commands['SPOP'] = self.cmd_spop
+        self.commands['SRANDMEMBER'] = self.cmd_srandmember
+        self.commands['SUNION'] = self.cmd_sunion
+        self.commands['SINTER'] = self.cmd_sinter
+        self.commands['SDIFF'] = self.cmd_sdiff
+        
+        # Advanced Hash commands
+        self.commands['HMSET'] = self.cmd_hmset
+        self.commands['HMGET'] = self.cmd_hmget
+        self.commands['HEXISTS'] = self.cmd_hexists
+        self.commands['HLEN'] = self.cmd_hlen
+        self.commands['HINCRBY'] = self.cmd_hincrby
+        
+        # Sorted Set commands
+        self.commands['ZADD'] = self.cmd_zadd
+        self.commands['ZREM'] = self.cmd_zrem
+        self.commands['ZSCORE'] = self.cmd_zscore
+        self.commands['ZRANGE'] = self.cmd_zrange
+        self.commands['ZREVRANGE'] = self.cmd_zrevrange
+        self.commands['ZCARD'] = self.cmd_zcard
+        self.commands['ZRANK'] = self.cmd_zrank
+        
+        # Bitmap commands
+        self.commands['SETBIT'] = self.cmd_setbit
+        self.commands['GETBIT'] = self.cmd_getbit
+        self.commands['BITCOUNT'] = self.cmd_bitcount
+        self.commands['BITOP'] = self.cmd_bitop
+        
+        # HyperLogLog commands
+        self.commands['PFADD'] = self.cmd_pfadd
+        self.commands['PFCOUNT'] = self.cmd_pfcount
+        self.commands['PFMERGE'] = self.cmd_pfmerge
+        
+        # Geospatial commands
+        self.commands['GEOADD'] = self.cmd_geoadd
+        self.commands['GEODIST'] = self.cmd_geodist
+        self.commands['GEOPOS'] = self.cmd_geopos
+        self.commands['GEORADIUS'] = self.cmd_georadius
+        
+        # Stream commands
+        self.commands['XADD'] = self.cmd_xadd
+        self.commands['XLEN'] = self.cmd_xlen
+        self.commands['XRANGE'] = self.cmd_xrange
+        self.commands['XREAD'] = self.cmd_xread
     
-    def execute_command(self, command_array):
+    def execute_command(self, command_array, client_handler=None):
         """Execute a Redstar command"""
         if not command_array or len(command_array) == 0:
             return Exception("ERR empty command")
@@ -67,7 +148,13 @@ class RedstarCommandProcessor:
             for i in range(1, len(command_array)):
                 args.append(command_array[i])
             
-            return command_func(args)
+            # Check if this is a pub/sub command that needs client_handler
+            if cmd_name in ['SUBSCRIBE', 'UNSUBSCRIBE', 'PSUBSCRIBE', 'PUNSUBSCRIBE', 'PUBLISH', 'PUBSUB']:
+                if client_handler is None:
+                    return Exception("ERR pub/sub commands require client context")
+                return command_func(args, client_handler)
+            else:
+                return command_func(args)
         except Exception as e:
             return Exception(f"ERR {str(e)}")
     
@@ -455,3 +542,202 @@ class RedstarCommandProcessor:
         """FLUSHALL"""
         self.store.clear_all()
         return "OK"
+    
+    # =============================================================================
+    # PUB/SUB COMMANDS
+    # =============================================================================
+    
+    def cmd_subscribe(self, args, client_handler):
+        """SUBSCRIBE channel [channel ...]"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_subscribe(args, client_handler)
+    
+    def cmd_unsubscribe(self, args, client_handler):
+        """UNSUBSCRIBE [channel [channel ...]]"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_unsubscribe(args, client_handler)
+    
+    def cmd_psubscribe(self, args, client_handler):
+        """PSUBSCRIBE pattern [pattern ...]"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_psubscribe(args, client_handler)
+    
+    def cmd_punsubscribe(self, args, client_handler):
+        """PUNSUBSCRIBE [pattern [pattern ...]]"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_punsubscribe(args, client_handler)
+    
+    def cmd_publish(self, args, client_handler):
+        """PUBLISH channel message"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_publish(args, client_handler)
+    
+    def cmd_pubsub(self, args, client_handler):
+        """PUBSUB subcommand [argument [argument ...]]"""
+        if not self.pubsub_commands:
+            return Exception("ERR pub/sub not available")
+        return self.pubsub_commands.cmd_pubsub(args, client_handler)
+    
+    # =============================================================================
+    # ADVANCED STRING COMMANDS
+    # =============================================================================
+    
+    def cmd_append(self, args):
+        return self.advanced_commands.cmd_append(args)
+    
+    def cmd_strlen(self, args):
+        return self.advanced_commands.cmd_strlen(args)
+    
+    def cmd_getrange(self, args):
+        return self.advanced_commands.cmd_getrange(args)
+    
+    def cmd_setrange(self, args):
+        return self.advanced_commands.cmd_setrange(args)
+    
+    def cmd_mget(self, args):
+        return self.advanced_commands.cmd_mget(args)
+    
+    def cmd_mset(self, args):
+        return self.advanced_commands.cmd_mset(args)
+    
+    def cmd_getset(self, args):
+        return self.advanced_commands.cmd_getset(args)
+    
+    # =============================================================================
+    # ADVANCED LIST COMMANDS
+    # =============================================================================
+    
+    def cmd_lindex(self, args):
+        return self.advanced_commands.cmd_lindex(args)
+    
+    def cmd_lset(self, args):
+        return self.advanced_commands.cmd_lset(args)
+    
+    # =============================================================================
+    # ADVANCED SET COMMANDS
+    # =============================================================================
+    
+    def cmd_spop(self, args):
+        return self.advanced_commands.cmd_spop(args)
+    
+    def cmd_srandmember(self, args):
+        return self.advanced_commands.cmd_srandmember(args)
+    
+    def cmd_sunion(self, args):
+        return self.advanced_commands.cmd_sunion(args)
+    
+    def cmd_sinter(self, args):
+        return self.advanced_commands.cmd_sinter(args)
+    
+    def cmd_sdiff(self, args):
+        return self.advanced_commands.cmd_sdiff(args)
+    
+    # =============================================================================
+    # ADVANCED HASH COMMANDS
+    # =============================================================================
+    
+    def cmd_hmset(self, args):
+        return self.advanced_commands.cmd_hmset(args)
+    
+    def cmd_hmget(self, args):
+        return self.advanced_commands.cmd_hmget(args)
+    
+    def cmd_hexists(self, args):
+        return self.advanced_commands.cmd_hexists(args)
+    
+    def cmd_hlen(self, args):
+        return self.advanced_commands.cmd_hlen(args)
+    
+    def cmd_hincrby(self, args):
+        return self.advanced_commands.cmd_hincrby(args)
+    
+    # =============================================================================
+    # SORTED SET COMMANDS
+    # =============================================================================
+    
+    def cmd_zadd(self, args):
+        return self.datatype_commands.cmd_zadd(args)
+    
+    def cmd_zrem(self, args):
+        return self.datatype_commands.cmd_zrem(args)
+    
+    def cmd_zscore(self, args):
+        return self.datatype_commands.cmd_zscore(args)
+    
+    def cmd_zrange(self, args):
+        return self.datatype_commands.cmd_zrange(args)
+    
+    def cmd_zrevrange(self, args):
+        return self.datatype_commands.cmd_zrevrange(args)
+    
+    def cmd_zcard(self, args):
+        return self.datatype_commands.cmd_zcard(args)
+    
+    def cmd_zrank(self, args):
+        return self.datatype_commands.cmd_zrank(args)
+    
+    # =============================================================================
+    # BITMAP COMMANDS
+    # =============================================================================
+    
+    def cmd_setbit(self, args):
+        return self.datatype_commands.cmd_setbit(args)
+    
+    def cmd_getbit(self, args):
+        return self.datatype_commands.cmd_getbit(args)
+    
+    def cmd_bitcount(self, args):
+        return self.datatype_commands.cmd_bitcount(args)
+    
+    def cmd_bitop(self, args):
+        return self.datatype_commands.cmd_bitop(args)
+    
+    # =============================================================================
+    # HYPERLOGLOG COMMANDS
+    # =============================================================================
+    
+    def cmd_pfadd(self, args):
+        return self.datatype_commands.cmd_pfadd(args)
+    
+    def cmd_pfcount(self, args):
+        return self.datatype_commands.cmd_pfcount(args)
+    
+    def cmd_pfmerge(self, args):
+        return self.datatype_commands.cmd_pfmerge(args)
+    
+    # =============================================================================
+    # GEOSPATIAL COMMANDS
+    # =============================================================================
+    
+    def cmd_geoadd(self, args):
+        return self.datatype_commands.cmd_geoadd(args)
+    
+    def cmd_geodist(self, args):
+        return self.datatype_commands.cmd_geodist(args)
+    
+    def cmd_geopos(self, args):
+        return self.datatype_commands.cmd_geopos(args)
+    
+    def cmd_georadius(self, args):
+        return self.datatype_commands.cmd_georadius(args)
+    
+    # =============================================================================
+    # STREAM COMMANDS
+    # =============================================================================
+    
+    def cmd_xadd(self, args):
+        return self.datatype_commands.cmd_xadd(args)
+    
+    def cmd_xlen(self, args):
+        return self.datatype_commands.cmd_xlen(args)
+    
+    def cmd_xrange(self, args):
+        return self.datatype_commands.cmd_xrange(args)
+    
+    def cmd_xread(self, args):
+        return self.datatype_commands.cmd_xread(args)

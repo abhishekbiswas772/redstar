@@ -146,6 +146,13 @@ class HashTable:
             if entry is not None and not entry.deleted:
                 yield entry.key
     
+    def clear(self):
+        """Remove all items from the hash table."""
+        self.capacity = 8  # Reset to initial capacity
+        self.size = 0
+        self.deleted_count = 0
+        self._buckets = [None] * self.capacity
+    
     def __repr__(self):
         items = []
         for entry in self._buckets:

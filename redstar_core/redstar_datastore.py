@@ -1,6 +1,11 @@
 from core_datastructures.deque import Deque
 from core_datastructures.hash_table import HashTable
 from core_datastructures.hashset import HashSet
+from core_datastructures.sorted_set import SortedSet
+from core_datastructures.bitmap import Bitmap
+from core_datastructures.hyperloglog import HyperLogLog
+from core_datastructures.geospatial import Geospatial
+from core_datastructures.stream import Stream
 from redstar_core.redstar_value import RedStarValue
 from core_datastructures.dynamic_array import DArray
 import threading
@@ -173,3 +178,125 @@ class RedStarDataSource:
     def clear_all(self):
         with self.lock:
             self.data.clear()
+    
+    # =============================================================================
+    # SORTED SET OPERATIONS
+    # =============================================================================
+    
+    def get_sorted_set(self, key, create_if_not_exists=False):
+        if self._clean_expired(key):
+            if not create_if_not_exists:
+                return None
+        
+        if key not in self.data:
+            if create_if_not_exists:
+                with self.lock:
+                    redstar_value = RedStarValue(SortedSet(), 'zset')
+                    self.data[key] = redstar_value
+                    return redstar_value.value
+            return None
+        
+        redstar_value = self.data[key]
+        if redstar_value.type != 'zset':
+            raise TypeError(f"WRONGTYPE: key {key} is not a sorted set")
+        
+        return redstar_value.value
+    
+    # =============================================================================
+    # BITMAP OPERATIONS
+    # =============================================================================
+    
+    def get_bitmap(self, key, create_if_not_exists=False):
+        if self._clean_expired(key):
+            if not create_if_not_exists:
+                return None
+        
+        if key not in self.data:
+            if create_if_not_exists:
+                with self.lock:
+                    redstar_value = RedStarValue(Bitmap(), 'bitmap')
+                    self.data[key] = redstar_value
+                    return redstar_value.value
+            return None
+        
+        redstar_value = self.data[key]
+        # Bitmap operations can work on strings too
+        if redstar_value.type == 'bitmap':
+            return redstar_value.value
+        elif redstar_value.type == 'string':
+            # Convert string to bitmap
+            bitmap = Bitmap(redstar_value.value)
+            redstar_value.value = bitmap
+            redstar_value.type = 'bitmap'
+            return bitmap
+        else:
+            raise TypeError(f"WRONGTYPE: key {key} is not a bitmap or string")
+    
+    # =============================================================================
+    # HYPERLOGLOG OPERATIONS
+    # =============================================================================
+    
+    def get_hyperloglog(self, key, create_if_not_exists=False):
+        if self._clean_expired(key):
+            if not create_if_not_exists:
+                return None
+        
+        if key not in self.data:
+            if create_if_not_exists:
+                with self.lock:
+                    redstar_value = RedStarValue(HyperLogLog(), 'hyperloglog')
+                    self.data[key] = redstar_value
+                    return redstar_value.value
+            return None
+        
+        redstar_value = self.data[key]
+        if redstar_value.type != 'hyperloglog':
+            raise TypeError(f"WRONGTYPE: key {key} is not a hyperloglog")
+        
+        return redstar_value.value
+    
+    # =============================================================================
+    # GEOSPATIAL OPERATIONS
+    # =============================================================================
+    
+    def get_geospatial(self, key, create_if_not_exists=False):
+        if self._clean_expired(key):
+            if not create_if_not_exists:
+                return None
+        
+        if key not in self.data:
+            if create_if_not_exists:
+                with self.lock:
+                    redstar_value = RedStarValue(Geospatial(), 'geo')
+                    self.data[key] = redstar_value
+                    return redstar_value.value
+            return None
+        
+        redstar_value = self.data[key]
+        if redstar_value.type != 'geo':
+            raise TypeError(f"WRONGTYPE: key {key} is not a geospatial index")
+        
+        return redstar_value.value
+    
+    # =============================================================================
+    # STREAM OPERATIONS
+    # =============================================================================
+    
+    def get_stream(self, key, create_if_not_exists=False):
+        if self._clean_expired(key):
+            if not create_if_not_exists:
+                return None
+        
+        if key not in self.data:
+            if create_if_not_exists:
+                with self.lock:
+                    redstar_value = RedStarValue(Stream(), 'stream')
+                    self.data[key] = redstar_value
+                    return redstar_value.value
+            return None
+        
+        redstar_value = self.data[key]
+        if redstar_value.type != 'stream':
+            raise TypeError(f"WRONGTYPE: key {key} is not a stream")
+        
+        return redstar_value.value
