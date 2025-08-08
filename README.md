@@ -82,6 +82,138 @@
    python run_comprehensive_tests.py
    ```
 
+## 📚 Client SDKs
+
+Redstar provides official client SDKs in multiple programming languages for easy integration:
+
+### 🐍 **Python SDK**
+
+Full-featured Python client with async support and connection pooling.
+
+```bash
+# Install
+cd client-sdks/python
+pip install -e .
+```
+
+```python
+from redstar_client import RedstarClient
+
+# Basic usage
+with RedstarClient('localhost', 6379) as client:
+    client.set('hello', 'world')
+    print(client.get('hello'))  # Output: world
+    
+    # Hash operations
+    client.hset('user:1', 'name', 'Alice')
+    user = client.hgetall('user:1')
+    
+    # Pub/Sub with callbacks
+    client.subscribe('news', callback=lambda ch, msg: print(f"[{ch}] {msg}"))
+```
+
+**Features:**
+- Thread-safe operations with auto-reconnection
+- Pub/Sub support with callbacks
+- Context manager support
+- Type hints and comprehensive error handling
+- Zero external dependencies
+
+### ☕ **Java SDK**
+
+Enterprise-ready Java client with connection pooling and comprehensive API.
+
+```bash
+# Build with Maven
+cd client-sdks/java
+mvn clean install
+```
+
+```xml
+<dependency>
+    <groupId>com.redstar</groupId>
+    <artifactId>redstar-client</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+import com.redstar.client.RedstarClient;
+
+// Basic usage with try-with-resources
+try (RedstarClient client = new RedstarClient("localhost", 6379)) {
+    client.connect();
+    
+    // String operations
+    client.set("hello", "world");
+    String value = client.get("hello");
+    
+    // Hash operations
+    client.hset("user:1", "name", "Alice");
+    Map<String, String> user = client.hgetall("user:1");
+    
+    // Pub/Sub with lambda callbacks
+    client.subscribe("news", (channel, message) -> {
+        System.out.println("[" + channel + "] " + message);
+    });
+}
+```
+
+**Features:**
+- Thread-safe concurrent operations
+- Auto-reconnection with configurable retries
+- Comprehensive exception handling
+- Java 8+ compatible with lambda support
+- Maven/Gradle integration
+
+### ⚡ **C++ SDK**
+
+High-performance C++ client with modern C++ design and RAII resource management.
+
+```bash
+# Build with CMake
+cd client-sdks/cpp
+mkdir build && cd build
+cmake ..
+make
+```
+
+```cpp
+#include "RedstarClient.h"
+using namespace redstar;
+
+int main() {
+    try {
+        RedstarClient client("localhost", 6379);
+        client.connect();
+        
+        // String operations
+        client.set("hello", "world");
+        std::string value = client.get("hello");
+        
+        // Hash operations
+        client.hset("user:1", "name", "Alice");
+        auto user = client.hgetall("user:1");
+        
+        // Pub/Sub with lambda callbacks
+        client.subscribe("news", [](const std::string& channel, const std::string& message) {
+            std::cout << "[" << channel << "] " << message << std::endl;
+        });
+        
+    } catch (const RedstarException& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    return 0;
+}
+```
+
+**Features:**
+- Modern C++11/14/17 design with RAII
+- Cross-platform (Windows, Linux, macOS)
+- Thread-safe operations and move semantics
+- Zero dependencies and high performance
+- CMake integration ready
+
 ### Basic Usage Examples
 
 ```bash
@@ -123,6 +255,21 @@ Reading messages...
 
 ```
 redstar/
+├── client-sdks/                  # Client SDKs for different languages
+│   ├── python/                  # Python client SDK
+│   │   ├── redstar_client.py    # Main Python client
+│   │   ├── setup.py             # Python package setup
+│   │   └── README.md            # Python SDK documentation
+│   ├── java/                    # Java client SDK
+│   │   ├── RedstarClient.java   # Main Java client
+│   │   ├── pom.xml              # Maven configuration
+│   │   └── README.md            # Java SDK documentation
+│   └── cpp/                     # C++ client SDK
+│       ├── RedstarClient.h      # C++ header file
+│       ├── RedstarClient.cpp    # C++ implementation
+│       ├── CMakeLists.txt       # CMake configuration
+│       ├── example.cpp          # Usage examples
+│       └── README.md            # C++ SDK documentation
 ├── core_datastructures/          # Custom data structures
 │   ├── dynamic_array.py         # Auto-resizing array (DArray)
 │   ├── linked_list.py           # Doubly-linked list
@@ -154,6 +301,7 @@ redstar/
 ├── main.py                       # Entry point
 ├── redstar_main.py              # Alternative entry point
 ├── CLAUDE.md                     # Development documentation
+├── CONTRIBUTING.md              # Contribution guidelines
 └── README.md                     # This file
 ```
 
