@@ -8,9 +8,6 @@ Perfect for one-command video demos
 import subprocess
 import sys
 import time
-import os
-import signal
-import threading
 from datetime import datetime
 
 class DemoRunner:
@@ -21,7 +18,7 @@ class DemoRunner:
     def start_server(self):
         """Start the Redstar server in background"""
         try:
-            print("🚀 Starting Redstar server...")
+            print("Starting Redstar server...")
             self.server_process = subprocess.Popen(
                 [sys.executable, 'main.py'],
                 stdout=subprocess.PIPE,
@@ -41,40 +38,40 @@ class DemoRunner:
                     
                     if result == 0:
                         self.server_ready = True
-                        print("✅ Redstar server is ready!")
+                        print("Redstar server is ready!")
                         return True
                 except:
                     pass
                 
                 time.sleep(0.5)
             
-            print("❌ Server failed to start within timeout")
+            print("Server failed to start within timeout")
             return False
             
         except Exception as e:
-            print(f"❌ Failed to start server: {e}")
+            print(f"Failed to start server: {e}")
             return False
     
     def run_demo(self):
         """Run the demo script"""
         try:
-            print("\n🎬 Running comprehensive demo...")
+            print("\nRunning comprehensive demo...")
             result = subprocess.run(
                 [sys.executable, 'redstar_demo.py'],
                 timeout=300  # 5 minute timeout
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
-            print("⏰ Demo timed out")
+            print("Demo timed out")
             return False
         except Exception as e:
-            print(f"❌ Demo failed: {e}")
+            print(f"Demo failed: {e}")
             return False
     
     def stop_server(self):
         """Stop the server gracefully"""
         if self.server_process:
-            print("\n🛑 Stopping Redstar server...")
+            print("\nStopping Redstar server...")
             try:
                 # Try graceful shutdown first
                 self.server_process.terminate()
@@ -83,14 +80,13 @@ class DemoRunner:
                 # Force kill if needed
                 self.server_process.kill()
                 self.server_process.wait()
-            print("✅ Server stopped")
+            print("Server stopped")
     
     def run_complete_demo(self):
         """Run complete demo with server management"""
-        print("🎯 REDSTAR COMPLETE DEMONSTRATION")
+        print("REDSTAR COMPLETE DEMONSTRATION")
         print("=" * 60)
-        print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("🎥 Perfect for video recording!")
+        print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
         
         success = False
@@ -107,24 +103,24 @@ class DemoRunner:
             success = self.run_demo()
             
         except KeyboardInterrupt:
-            print("\n⛔ Demo interrupted by user")
+            print("\nDemo interrupted by user")
             
         finally:
             # Always stop server
             self.stop_server()
         
         if success:
-            print("\n🎉 COMPLETE DEMO FINISHED SUCCESSFULLY! 🎉")
-            print("📹 Perfect for showcasing Redstar capabilities!")
+            print("\nCOMPLETE DEMO FINISHED SUCCESSFULLY!")
+            print("Perfect for showcasing Redstar capabilities!")
         else:
-            print("\n❌ Demo completed with issues")
+            print("\nDemo completed with issues")
         
         return success
 
 def main():
     """Main entry point"""
     if len(sys.argv) > 1 and sys.argv[1] == '--help':
-        print("🎬 Redstar Complete Demo Runner")
+        print("Redstar Complete Demo Runner")
         print("")
         print("Usage: python run_demo.py")
         print("")
@@ -133,7 +129,6 @@ def main():
         print("  2. Run the comprehensive feature demonstration") 
         print("  3. Stop the server when complete")
         print("")
-        print("Perfect for creating demo videos!")
         return 0
     
     runner = DemoRunner()

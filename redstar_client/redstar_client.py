@@ -47,6 +47,10 @@ class RedstarClient:
         
         return result
     
+    def send_command(self, args):
+        """Send command (compatibility method for demo)"""
+        return self.execute(*args)
+    
     def close(self):
         """Close connection"""
         if self.socket:
